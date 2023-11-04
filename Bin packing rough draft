@@ -1,0 +1,175 @@
+import csv
+import math
+import random
+
+#In bin packing, you're concerned with how to allocate items to bins to minimize the number of bins used or to make the distribution
+# as balanced as possible while staying within the bin weight capacity constraints.
+# It's a combinatorial optimization problem that has applications in various fields, such as logistics and resource allocation.
+
+
+
+class BinPackingProblem:
+    def __init__(self, item_weights, truck_weight_capacity):
+        self.item_weights = item_weights
+        self.truck_weight_capacity = truck_weight_capacity
+
+    def __str__(self):
+        total_weight = sum(self.item_weights)
+        return f"Item Weights: {self.item_weights}\nTruck Weight Capacity: {self.truck_weight_capacity}\nTotal Weight of All Items: {total_weight}"
+
+def utilization_ratio(individual):
+    total_capacity = len(individual.route) * individual.truck_weight_capacity
+    total_item_weight = sum(sum(individual.item_weights[i] for i in bin_items) for bin_items in individual.route)
+    return total_item_weight / total_capacity
+
+class Individual:
+    def __init__(self, item_weights, truck_weight_capacity, mutation_method):
+        self.item_weights = item_weights
+        self.truck_weight_capacity = truck_weight_capacity
+        self.route = []  # Initialize the route (solution)
+        self.fitness = 0.0
+        self.mutation_method = mutation_method  # Specify the mutation method (swap or scramble)
+
+    def initialize_route(self):
+        total_weight = sum(self.item_weights)
+        num_trucks = math.ceil(total_weight / self.truck_weight_capacity)
+        bins = [[] for _ in range(num_trucks)]
+        random.shuffle(self.item_weights)  # Randomly shuffle the item weights
+        print(f"Total Weight of All Items: {total_weight}")
+        for weight in self.item_weights:
+            added = False
+            for i, bin_items in enumerate(bins):
+                if sum(self.item_weights[item] for item in bin_items) + weight <= self.truck_weight_capacity:
+                    bin_items.append(self.item_weights.index(weight))
+                    added = True
+                    break
+            if not added:
+                print(f"Item {self.item_weights.index(weight)} couldn't fit in any bin.")
+        
+        print("Initial Route:")
+        for i, bin_items in enumerate(bins):
+            items = [self.item_weights[item] for item in bin_items]
+            print(f"Bin {i + 1}: {items} (Total Weight: {sum(items)})")
+
+
+        self.calculate_fitness()
+
+
+        return bins
+    
+    def calculate_fitness(self):
+        self.fitness = utilization_ratio(self)
+
+    def mutate(self):
+        # Implement mutation based on the selected method (swap or scramble)
+        if self.mutation_method == "swap":
+            self.swap_mutation()
+        elif self.mutation_method == "scramble":
+            self.scramble_mutation()
+
+    def swap_mutation(self):
+        # Implement swap mutation for Bin Packing Problem
+        # Select two random items and swap them between bins
+        #It selects two random bins (trucks) within the individual's route.
+        #Then, it randomly chooses one item from each of the selected bins.
+        #Finally, it swaps these two items between the selected bins.
+        if len(self.route) < 2:
+            return  # Nothing to swap if there are fewer than 2 bins
+
+        bin1 = random.randint(0, len(self.route) - 1)
+        bin2 = bin1
+        while bin2 == bin1:
+            bin2 = random.randint(0, len(self.route) - 1)
+        
+        if self.route[bin1] and self.route[bin2]:
+            while True:
+                item1 = random.choice(self.route[bin1])
+                item2 = random.choice(self.route[bin2])
+
+                bin1_weight = sum(self.item_weights[i] for i in self.route[bin1]) - self.item_weights[item1] + self.item_weights[item2]
+                bin2_weight = sum(self.item_weights[i] for i in self.route[bin2]) - self.item_weights[item2] + self.item_weights[item1]
+
+
+                if bin1_weight <= self.truck_weight_capacity and bin2_weight <= self.truck_weight_capacity:
+                    self.route[bin1].remove(item1)
+                    self.route[bin2].remove(item2)
+                    self.route[bin1].append(item2)
+                    self.route[bin2].append(item1)
+                    self.fitness = None
+                    break
+
+    def scramble_mutation(self):
+        # Implement scramble mutation for Bin Packing Problem
+        # Select a random bin and scramble the items within it
+        if len(self.route) == 0:
+            return  # Nothing to scramble if there are no bins
+
+        bin_index = random.randint(0, len(self.route) - 1)
+        bin_to_scramble = self.route[bin_index]
+
+        if bin_to_scramble:
+            if len(bin_to_scramble) > 1:
+                random.shuffle(bin_to_scramble)
+                self.route[bin_index] = bin_to_scramble
+
+        self.fitness = None
+
+    def calculate_fitness(self):
+        self.fitness = utilization_ratio(self)
+
+
+def utilization_ratio(individual):
+    bin_ratios = []
+
+    for bin_items in individual.route:
+        bin_weight = sum(individual.item_weights[i] for i in bin_items)
+        ratio = bin_weight / individual.truck_weight_capacity
+        bin_ratios.append(ratio)
+
+    if bin_ratios:
+        average_ratio = sum(bin_ratios) / len(bin_ratios)
+    else:
+        average_ratio = 0
+
+    return average_ratio
+
+def read_bin_packing_input(file_path):
+    with open(file_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            item_weights = [int(weight) for weight in row['Item Weight'].strip('[]').split(',')]
+            truck_weight_capacity = int(row['Truck Weight Capacity'])
+            return BinPackingProblem(item_weights, truck_weight_capacity)
+
+# Specify the path to your input CSV file
+input_file = 'bin_packing_30.csv'
+
+mutation_method = "swap"
+
+# Read the data and create a BinPackingProblem instance
+problem_instance = read_bin_packing_input(input_file)
+
+individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
+
+#print("Before calling initialize_route")
+individual.route = individual.initialize_route()
+#print("After calling initialize_route")
+individual.calculate_fitness() 
+
+# Display the problem instance
+print(problem_instance)
+print(f"Mutation Method: {mutation_method}")
+print(f"Initial Utilization Ratio: {individual.fitness:.2%}")
+
+individual.mutate()
+
+print("Route after mutation:")
+for i, bin_items in enumerate(individual.route):
+    print(f"Bin {i + 1}: {bin_items}")
+
+individual.calculate_fitness() 
+
+if individual.fitness is not None:
+    print(f"Utilization Ratio after Mutation: {individual.fitness:.2%}")
+else:
+    print("Utilization Ratio after Mutation: N/A (Fitness not calculated)")
