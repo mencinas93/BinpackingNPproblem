@@ -67,11 +67,7 @@ class Individual:
         total_bins = len(self.route)
         filled_bins = sum(1 for bin_items in self.route if sum(self.item_weights[i] for i in bin_items) == max_bin_capacity)
         
-        self.fitness = filled_bins / total_bins if total_bins > 0 else 0.0  # Avoid division by zero
-        #if total_bins > 0:
-        #    self.fitness = filled_bins / total_bins
-        #else:
-        #    self.fitness = 0.0  
+        self.fitness = filled_bins / total_bins if total_bins > 0 else 0.0  # Avoid division by zero 
 
 
     def mutate(self):
@@ -114,7 +110,7 @@ class Individual:
 
     def scramble_mutation(self):
         # Implement scramble mutation for Bin Packing Problem
-        # Select a random bidsn and scramble the items within it
+        # Select a random bins and scramble the items within it
         if len(self.route) == 0:
             return  # Nothing to scramble if there are no bins
 
@@ -127,6 +123,24 @@ class Individual:
                 self.route[bin_index] = bin_to_scramble
 
         self.calculate_fitness()
+
+
+class GeneticAlgorithm:
+    def __init__(self, population_size, mutation_rate, item_weights, truck_weight_capacity, mutation_method):
+        self.population_size = population_size
+        self.mutation_rate = mutation_rate
+        self.population = []
+        self.item_weights = item_weights
+        self.truck_weight_capacity = truck_weight_capacity
+        self.mutation_method = mutation_method
+
+
+    def initialize_population(self):
+        print(f"GA Population: {self.population_size}, Mutation Method: {self.mutation_method}")
+        for _ in range(self.population_size):
+            individual = Individual(self.item_weights, self.truck_weight_capacity, self.mutation_method)
+            individual.initialize_route()
+            self.population.append(individual)
 
 
 
@@ -166,3 +180,13 @@ for i, bin_items in enumerate(individual.route):
 individual.calculate_fitness()
 
 print(f"Fitness after Mutation: {individual.fitness:.2%}")
+
+population_size = 5
+mutation_rate = .5  # 30%
+mutation_method = "swap"  # or "scramble" as needed
+
+ga = GeneticAlgorithm(population_size, mutation_rate, problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
+
+# Initialize the population
+ga.initialize_population()
+
