@@ -124,24 +124,7 @@ class Individual:
 
         self.calculate_fitness()
 
-
-class GeneticAlgorithm:
-    def __init__(self, population_size, mutation_rate, item_weights, truck_weight_capacity, mutation_method):
-        self.population_size = population_size
-        self.mutation_rate = mutation_rate
-        self.population = []
-        self.item_weights = item_weights
-        self.truck_weight_capacity = truck_weight_capacity
-        self.mutation_method = mutation_method
-
-
-    def initialize_population(self):
-        print(f"GA Population: {self.population_size}, Mutation Method: {self.mutation_method}")
-        for _ in range(self.population_size):
-            individual = Individual(self.item_weights, self.truck_weight_capacity, self.mutation_method)
-            individual.initialize_route()
-            self.population.append(individual)
-
+    
 
 
 
@@ -157,36 +140,34 @@ def read_bin_packing_input(file_path):
 input_file = 'bin_packing_30.csv'
 
 
-mutation_method = "scramble"
-
-# Read the data and create a BinPackingProblem instance
-problem_instance = read_bin_packing_input(input_file)
-
-individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
-
-print(problem_instance) 
+mutation_methods = ["swap", "scramble"]
 
 
-individual.initialize_route()
-individual.print_route()
-individual.mutate()
+num_runs = 3
 
-print("Route after mutation:")
-for i, bin_items in enumerate(individual.route):
-    items = [individual.item_weights[item] for item in bin_items]
-    total_weight = sum(items)
-    print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
+for run in range(num_runs):
+    print(f"--- Run {run + 1} ---")
 
-individual.calculate_fitness()
+    # Randomly choose a mutation method
+    mutation_method = random.choice(mutation_methods)
+    print(f"Mutation Method: {mutation_method}")
 
-print(f"Fitness after Mutation: {individual.fitness:.2%}")
+    # Read the data and create a BinPackingProblem instance
+    problem_instance = read_bin_packing_input(input_file)
 
-population_size = 5
-mutation_rate = .5  # 30%
-mutation_method = "swap"  # or "scramble" as needed
+    individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
 
-ga = GeneticAlgorithm(population_size, mutation_rate, problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
+    print(problem_instance)
 
-# Initialize the population
-ga.initialize_population()
+    individual.initialize_route()
+    individual.mutate()
+
+    print("Route after mutation:")
+    for i, bin_items in enumerate(individual.route):
+        items = [individual.item_weights[item] for item in bin_items]
+        total_weight = sum(items)
+        print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
+
+    fitness = len([bin for bin in individual.route if bin])
+    print(f"Fitness after Mutation: {individual.fitness:.2%}\n")
 
