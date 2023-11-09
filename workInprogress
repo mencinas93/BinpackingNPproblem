@@ -31,7 +31,9 @@ class Individual:
         total_weight = sum(self.item_weights)
         num_trucks = math.ceil(total_weight / self.truck_weight_capacity)
         bins = [[] for _ in range(num_trucks)]
-        random.shuffle(self.item_weights)  # Randomly shuffle the item weights
+        random.shuffle(self.item_weights)
+        
+          # Randomly shuffle the item weights
         print(f"Total Weight of All Items: {total_weight}")
         for weight in self.item_weights:
             added = False
@@ -191,13 +193,15 @@ for run in range(num_runs):
 
     if individual.fitness > best_fitness:
         best_fitness = individual.fitness
-        best_individual = [bin_items.copy() for bin_items in individual.route]
+        best_individual = []
+        for bin_items in individual.route:
+            items = [problem_instance.item_weights[item] for item in bin_items]
+            best_individual.append(items)
 
 print("\nBest Individual:")
 for i, bin_items in enumerate(best_individual):
-    items = [problem_instance.item_weights[item] for item in bin_items]
-    total_weight = sum(items)
-    print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
+    total_weight = sum(bin_items)
+    print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
 
 print(f"Best Fitness: {best_fitness:.2%}")
 
