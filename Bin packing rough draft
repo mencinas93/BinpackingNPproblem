@@ -1,6 +1,7 @@
 import csv
 import math
 import random
+import time
 
 #In bin packing, you're concerned with how to allocate items to bins to minimize the number of bins used or to make the distribution
 # as balanced as possible while staying within the bin weight capacity constraints.
@@ -26,11 +27,13 @@ class Individual:
         self.fitness = 0.0
         self.mutation_method = mutation_method  # Specify the mutation method (swap or scramble)
 
-    def initialize_route(self):
+    def initialize_route(self, num_mutations=4):
         total_weight = sum(self.item_weights)
         num_trucks = math.ceil(total_weight / self.truck_weight_capacity)
         bins = [[] for _ in range(num_trucks)]
-        random.shuffle(self.item_weights)  # Randomly shuffle the item weights
+        random.shuffle(self.item_weights)
+        
+          # Randomly shuffle the item weights
         print(f"Total Weight of All Items: {total_weight}")
         for weight in self.item_weights:
             added = False
@@ -46,7 +49,13 @@ class Individual:
         for i, bin_items in enumerate(bins):
             items = [self.item_weights[item] for item in bin_items]
             print(f"Bin {i + 1}: {items} (Total Weight: {sum(items)})")
+        
+        for _ in range(num_mutations):
+            mutation_method = random.choice(["swap", "scramble"])
+            print(f"Mutation Method: {mutation_method}")
+            self.mutate(mutation_method)
 
+        
         self.route = bins  
         self.calculate_fitness()
         print(f"Fitness: {individual.fitness:.2%}")
@@ -70,13 +79,12 @@ class Individual:
         self.fitness = filled_bins / total_bins if total_bins > 0 else 0.0  # Avoid division by zero 
 
 
-    def mutate(self):
-        # Implement mutation based on the selected method (swap or scramble)
-        print(f"Mutation Method: {self.mutation_method}")
+    def mutate(self, mutation_method):
+        print(f"Mutation Method: {mutation_method}")
 
-        if self.mutation_method == "swap":
+        if mutation_method == "swap":
             self.swap_mutation()
-        elif self.mutation_method == "scramble":
+        elif mutation_method == "scramble":
             self.scramble_mutation()
 
     def swap_mutation(self):
@@ -142,8 +150,12 @@ input_file = 'bin_packing_30.csv'
 
 mutation_methods = ["swap", "scramble"]
 
+all_fitness_values = []
+num_runs = 2 #generation
+total_execution_time = 0
+best_individual = None
+best_fitness = 0.0
 
-num_runs = 3
 
 for run in range(num_runs):
     print(f"--- Run {run + 1} ---")
@@ -155,12 +167,17 @@ for run in range(num_runs):
     # Read the data and create a BinPackingProblem instance
     problem_instance = read_bin_packing_input(input_file)
 
+    start_time = time.time()
+
     individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
 
     print(problem_instance)
 
     individual.initialize_route()
-    individual.mutate()
+    individual.mutate(mutation_method)
+
+    execution_time = time.time() - start_time
+    total_execution_time += execution_time
 
     print("Route after mutation:")
     for i, bin_items in enumerate(individual.route):
@@ -168,6 +185,34 @@ for run in range(num_runs):
         total_weight = sum(items)
         print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
 
-    fitness = len([bin for bin in individual.route if bin])
+    #fitness = len([bin for bin in individual.route if bin])
+    fitness = sum([sum(problem_instance.item_weights[item] for item in bin_items) for bin_items in individual.route])
+    all_fitness_values.append(individual.fitness)  # Add this line to append the fitness value to the list
     print(f"Fitness after Mutation: {individual.fitness:.2%}\n")
+    print(f"Execution Time: {execution_time:.4f} seconds\n")
 
+    if individual.fitness > best_fitness:
+        best_fitness = individual.fitness
+        best_individual = []
+        for bin_items in individual.route:
+            items = [problem_instance.item_weights[item] for item in bin_items]
+            best_individual.append(items)
+
+print("\nBest Individual:")
+for i, bin_items in enumerate(best_individual):
+    total_weight = sum(bin_items)
+    print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
+
+print(f"Best Fitness: {best_fitness:.2%}")
+
+
+average_fitness = sum(all_fitness_values) / num_runs
+min_fitness = min(all_fitness_values)
+max_fitness = max(all_fitness_values)
+std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
+
+print("\nStatistics:")
+print(f"Average Fitness: {average_fitness:.2%}")
+print(f"Min Fitness: {min_fitness:.2%}")
+print(f"Max Fitness: {max_fitness:.2%}")
+print(f"Standard Deviation of Fitness: {std_dev_fitness:.4f}")
