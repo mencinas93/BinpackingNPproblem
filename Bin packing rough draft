@@ -2,6 +2,9 @@ import csv
 import math
 import random
 import time
+import tkinter as tk
+from tkinter import scrolledtext
+
 
 #In bin packing, you're concerned with how to allocate items to bins to minimize the number of bins used or to make the distribution
 # as balanced as possible while staying within the bin weight capacity constraints.
@@ -133,8 +136,86 @@ class Individual:
         self.calculate_fitness()
 
     
+def validate_solution(problem_instance, combined_route, truck_capacity):
+    all_items = [item for bin_items in combined_route for item in bin_items]
 
 
+    if set(all_items) != set(problem_instance.item_weights):
+        print("Error: Combined route does not contain all original items.")
+        return False
+
+    # Sort the bins by their capacity (descending order)
+    sorted_bins = sorted(enumerate(combined_route), key=lambda x: sum(problem_instance.item_weights[item] for item in x[1]), reverse=True)
+
+    # Validate the combined route
+    total_weight = 0
+    for i, (bin_index, bin_items) in enumerate(sorted_bins):
+        total_weight += sum(problem_instance.item_weights[item] for item in bin_items)
+        if total_weight > truck_capacity:
+            return False
+
+    print("Solution is valid.")
+    return True
+
+class BinPackingGUI:
+    def __init__(self, root, combined_route, individual_stats, statistics, total_execution_time):
+        self.root = root
+        self.root.title("Bin Packing Solution")
+        self.combined_route = combined_route
+        self.individual_stats = individual_stats
+        self.statistics = statistics
+        self.total_execution_time = total_execution_time
+
+        self.create_gui()
+
+    def create_gui(self):
+        # Display statistics
+
+        individual_stats_label = tk.Label(self.root, text="GA Individual Run Statistics:")
+        individual_stats_label.pack()
+
+        individual_stats_text = scrolledtext.ScrolledText(self.root, width=50, height=10)
+        individual_stats_text.pack()
+        individual_stats_text.insert(tk.END, self.individual_stats)
+
+        # Display combined route
+        route_label = tk.Label(self.root, text="\nCombined Route:")
+        route_label.pack()
+
+        route_text = scrolledtext.ScrolledText(self.root, width=50, height=20)
+        route_text.pack()
+        route_text.insert(tk.END, self.format_combined_route())
+
+        # Display remaining weight
+        remaining_weight_label = tk.Label(self.root, text=f"\nRemaining Weight for max truck capacity and How much weight your over trucks max weight capacity {self.calculate_remaining_weight()}")
+        remaining_weight_label.pack()
+
+        stats_label = tk.Label(self.root, text="\nTop Combined Cxperts Statistics:")
+        stats_label.pack()
+
+        stats_text = scrolledtext.ScrolledText(self.root, width=50, height=10)
+        stats_text.pack()
+        stats_text.insert(tk.END, self.statistics)
+
+        # Display total execution time
+        execution_time_label = tk.Label(self.root, text=f"\nTotal Execution Time: {self.total_execution_time:.4f} seconds")
+        execution_time_label.pack()
+
+    def format_combined_route(self):
+        formatted_route = ""
+        for i, bin_items in enumerate(self.combined_route):
+            total_weight = sum(bin_items)
+            formatted_route += f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})\n"
+        return formatted_route
+
+    def calculate_remaining_weight(self):
+        max_trucks = 100
+        max_truck_capacity = 11
+        total_assigned_weight = sum(sum(bin_items) for bin_items in self.combined_route)
+        remaining_weight = max(0, max_truck_capacity * max_trucks - total_assigned_weight)
+        over_limit_weight = max(0, total_assigned_weight - max_truck_capacity * max_trucks)
+        return remaining_weight, over_limit_weight
+    
 
 def read_bin_packing_input(file_path):
     with open(file_path, mode='r') as file:
@@ -147,11 +228,13 @@ def read_bin_packing_input(file_path):
 # Specify the path to your input CSV file
 input_file = 'bin_packing_30.csv'
 
+start_total_time = time.time()
+
 
 mutation_methods = ["swap", "scramble"]
 
 all_fitness_values = []
-num_runs = 2 #generation
+num_runs = 100 #generation
 total_execution_time = 0
 best_individual = None
 best_fitness = 0.0
@@ -220,24 +303,43 @@ for loop in range(num_loops):
     all_best_individuals.append((best_individual, best_fitness))
 
 combined_best_individuals = []
+combined_route = []
 for i, (individual, fitness) in enumerate(all_best_individuals):
     print(f"\n--- Combined Best Individual {i + 1} ---")
+    combined_route.extend(individual) 
     for j, bin_items in enumerate(individual):
         total_weight = sum(bin_items)
         print(f"Bin {j + 1}: {bin_items} (Total Weight: {total_weight})")
     print(f"Fitness: {fitness:.2%}")
           
+    combined_best_individuals.append((individual, fitness))
 
-    average_fitness = sum(all_fitness_values) / num_runs
-    min_fitness = min(all_fitness_values)
-    max_fitness = max(all_fitness_values)
-    std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
+# Calculate the fitness for the combined route
+total_fitness_combined = sum(fitness for _, fitness in combined_best_individuals)
+fitness_for_combined_route = total_fitness_combined / len(combined_best_individuals)
+    
+print("\nCombined Route:")
+for i, bin_items in enumerate(combined_route):
+    total_weight = sum(bin_items)
+    print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
 
-    print("\nStatistics:")
-    print(f"Average Fitness: {average_fitness:.2%}")
-    print(f"Min Fitness: {min_fitness:.2%}")
-    print(f"Max Fitness: {max_fitness:.2%}")
-    print(f"Standard Deviation of Fitness: {std_dev_fitness:.4f}")
+print(f"Fitness for Combined Route: {fitness_for_combined_route:.2%}")
+
+average_fitness = sum(all_fitness_values) / num_runs
+min_fitness = min(all_fitness_values)
+max_fitness = max(all_fitness_values)
+std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
+
+print("\nStatistics:")
+print(f"Average Fitness: {average_fitness:.2%}")
+print(f"Min Fitness: {min_fitness:.2%}")
+print(f"Max Fitness: {max_fitness:.2%}")
+print(f"Standard Deviation of Fitness: {std_dev_fitness:.4f}")
+
+average_fitness = sum(all_fitness_values) / num_runs
+min_fitness = min(all_fitness_values)
+max_fitness = max(all_fitness_values)
+std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
 
 average_fitness_combined = sum(fitness for _, fitness in all_best_individuals) / num_loops
 min_fitness_combined = min(fitness for _, fitness in all_best_individuals)
@@ -252,3 +354,47 @@ print(f"Max Fitness: {max_fitness_combined:.2%}")
 print(f"Standard Deviation of Fitness: {std_dev_fitness_combined:.4f}")
     
 
+input_file = 'bin_packing_30.csv'
+problem_instance = read_bin_packing_input(input_file)
+
+
+truck_capacity = 11
+validate_solution(problem_instance, combined_route, truck_capacity)
+
+print("Original Item Weights:", problem_instance.item_weights, problem_instance.truck_weight_capacity)
+
+
+max_trucks_to_display = 100
+
+print("\nCombined Route:")
+for i in range(min(max_trucks_to_display, len(combined_route))):
+    bin_items = combined_route[i]
+    total_weight = sum(bin_items)
+    print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
+
+# Calculate and print the remaining weight
+remaining_weight = sum(sum(bin_items) for bin_items in combined_route[max_trucks_to_display:])
+print(f"\nRemaining Weight: {remaining_weight}")
+
+total_execution_time = time.time() - start_total_time
+
+# Print total execution time
+print(f"\nTotal Execution Time: {total_execution_time:.4f} seconds")
+
+individual_stats = f"Statistics:\n" \
+                       f"Average Fitness: {average_fitness:.2%}\n" \
+                       f"Min Fitness: {min_fitness:.2%}\n" \
+                       f"Max Fitness: {max_fitness:.2%}\n" \
+                       f"Standard Deviation of Fitness: {std_dev_fitness:.4f}"
+
+
+
+statistics_info = f"Average Fitness: {average_fitness_combined:.2%}\n" \
+                   f"Min Fitness: {min_fitness_combined:.2%}\n" \
+                   f"Max Fitness: {max_fitness_combined:.2%}\n" \
+                   f"Standard Deviation of Fitness: {std_dev_fitness_combined:.4f}"
+
+
+root = tk.Tk()
+gui = BinPackingGUI(root, combined_route, individual_stats, statistics_info, total_execution_time)
+root.mainloop()
