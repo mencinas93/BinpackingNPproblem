@@ -155,64 +155,100 @@ num_runs = 2 #generation
 total_execution_time = 0
 best_individual = None
 best_fitness = 0.0
+num_loops = 5
+
+# Lists to store the best individuals and their fitness values from each loop
+all_best_individuals = []
 
 
-for run in range(num_runs):
-    print(f"--- Run {run + 1} ---")
+for loop in range(num_loops):
+    print(f"--- Loop {loop + 1} ---")
+
+    # Your existing code for one run
+    all_fitness_values = []
+    best_individual = None
+    best_fitness = 0.0
+
+    for run in range(num_runs):
+        print(f"--- Run {run + 1} ---")
 
     # Randomly choose a mutation method
-    mutation_method = random.choice(mutation_methods)
-    print(f"Mutation Method: {mutation_method}")
+        mutation_method = random.choice(mutation_methods)
+        print(f"Mutation Method: {mutation_method}")
 
     # Read the data and create a BinPackingProblem instance
-    problem_instance = read_bin_packing_input(input_file)
+        problem_instance = read_bin_packing_input(input_file)
 
-    start_time = time.time()
+        start_time = time.time()
 
-    individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
+        individual = Individual(problem_instance.item_weights, problem_instance.truck_weight_capacity, mutation_method)
 
-    print(problem_instance)
+        print(problem_instance)
 
-    individual.initialize_route()
-    individual.mutate(mutation_method)
+        individual.initialize_route()
+        individual.mutate(mutation_method)
 
-    execution_time = time.time() - start_time
-    total_execution_time += execution_time
+        execution_time = time.time() - start_time
+        total_execution_time += execution_time
 
-    print("Route after mutation:")
-    for i, bin_items in enumerate(individual.route):
-        items = [individual.item_weights[item] for item in bin_items]
-        total_weight = sum(items)
-        print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
+        print("Route after mutation:")
+        for i, bin_items in enumerate(individual.route):
+            items = [individual.item_weights[item] for item in bin_items]
+            total_weight = sum(items)
+            print(f"Bin {i + 1}: {items} (Total Weight: {total_weight})")
 
     #fitness = len([bin for bin in individual.route if bin])
-    fitness = sum([sum(problem_instance.item_weights[item] for item in bin_items) for bin_items in individual.route])
-    all_fitness_values.append(individual.fitness)  # Add this line to append the fitness value to the list
-    print(f"Fitness after Mutation: {individual.fitness:.2%}\n")
-    print(f"Execution Time: {execution_time:.4f} seconds\n")
+        fitness = sum([sum(problem_instance.item_weights[item] for item in bin_items) for bin_items in individual.route])
+        all_fitness_values.append(individual.fitness)  # Add this line to append the fitness value to the list
+        print(f"Fitness after Mutation: {individual.fitness:.2%}\n")
+        print(f"Execution Time: {execution_time:.4f} seconds\n")
 
-    if individual.fitness > best_fitness:
-        best_fitness = individual.fitness
-        best_individual = []
-        for bin_items in individual.route:
-            items = [problem_instance.item_weights[item] for item in bin_items]
-            best_individual.append(items)
+        if individual.fitness > best_fitness:
+            best_fitness = individual.fitness
+            best_individual = []
+            for bin_items in individual.route:
+                items = [problem_instance.item_weights[item] for item in bin_items]
+                best_individual.append(items)
 
-print("\nBest Individual:")
-for i, bin_items in enumerate(best_individual):
-    total_weight = sum(bin_items)
-    print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
+    print("\nBest Individual:")
+    for i, bin_items in enumerate(best_individual):
+        total_weight = sum(bin_items)
+        print(f"Bin {i + 1}: {bin_items} (Total Weight: {total_weight})")
 
-print(f"Best Fitness: {best_fitness:.2%}")
+    print(f"Best Fitness: {best_fitness:.2%}")
 
+    all_best_individuals.append((best_individual, best_fitness))
 
-average_fitness = sum(all_fitness_values) / num_runs
-min_fitness = min(all_fitness_values)
-max_fitness = max(all_fitness_values)
-std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
+combined_best_individuals = []
+for i, (individual, fitness) in enumerate(all_best_individuals):
+    print(f"\n--- Combined Best Individual {i + 1} ---")
+    for j, bin_items in enumerate(individual):
+        total_weight = sum(bin_items)
+        print(f"Bin {j + 1}: {bin_items} (Total Weight: {total_weight})")
+    print(f"Fitness: {fitness:.2%}")
+          
 
-print("\nStatistics:")
-print(f"Average Fitness: {average_fitness:.2%}")
-print(f"Min Fitness: {min_fitness:.2%}")
-print(f"Max Fitness: {max_fitness:.2%}")
-print(f"Standard Deviation of Fitness: {std_dev_fitness:.4f}")
+    average_fitness = sum(all_fitness_values) / num_runs
+    min_fitness = min(all_fitness_values)
+    max_fitness = max(all_fitness_values)
+    std_dev_fitness = math.sqrt(sum((x - average_fitness) ** 2 for x in all_fitness_values) / num_runs)
+
+    print("\nStatistics:")
+    print(f"Average Fitness: {average_fitness:.2%}")
+    print(f"Min Fitness: {min_fitness:.2%}")
+    print(f"Max Fitness: {max_fitness:.2%}")
+    print(f"Standard Deviation of Fitness: {std_dev_fitness:.4f}")
+
+average_fitness_combined = sum(fitness for _, fitness in all_best_individuals) / num_loops
+min_fitness_combined = min(fitness for _, fitness in all_best_individuals)
+max_fitness_combined = max(fitness for _, fitness in all_best_individuals)
+std_dev_fitness_combined = math.sqrt(sum((x - average_fitness_combined) ** 2 for _, x in all_best_individuals) / num_loops)
+
+# Print statistics for the combined best solutions
+print("\nStatistics for Combined Best Solutions:")
+print(f"Average Fitness: {average_fitness_combined:.2%}")
+print(f"Min Fitness: {min_fitness_combined:.2%}")
+print(f"Max Fitness: {max_fitness_combined:.2%}")
+print(f"Standard Deviation of Fitness: {std_dev_fitness_combined:.4f}")
+    
+
