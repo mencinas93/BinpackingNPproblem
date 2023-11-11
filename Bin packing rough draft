@@ -174,7 +174,6 @@ class BinPackingGUI:
 
     def create_gui(self):
         # Display statistics
-
         individual_stats_label = tk.Label(self.root, text="GA Individual Run Statistics:")
         individual_stats_label.pack()
 
@@ -182,18 +181,27 @@ class BinPackingGUI:
         individual_stats_text.pack()
         individual_stats_text.insert(tk.END, self.individual_stats)
 
-        # Display combined route
-        route_label = tk.Label(self.root, text="\nCombined Truck Routes:")
-        route_label.pack()
+        # Display detailed combined route
+        route_detail_label = tk.Label(self.root, text="\nDetailed Combined Truck Routes:")
+        route_detail_label.pack()
 
-        route_text = scrolledtext.ScrolledText(self.root, width=200, height=30)
-        route_text.pack()
-        route_text.insert(tk.END, self.format_combined_route())
+        route_detail_text = scrolledtext.ScrolledText(self.root, width=200, height=20)
+        route_detail_text.pack()
+        route_detail_text.insert(tk.END, self.format_combined_route_detail())
+
+        # Display summary information
+        summary_label = tk.Label(self.root, text="\nSummary Information:")
+        summary_label.pack()
+
+        summary_text = scrolledtext.ScrolledText(self.root, width=200, height=20)
+        summary_text.pack()
+        summary_text.insert(tk.END, self.format_summary_info())
 
         # Display remaining weight left over
         remaining_weight_label = tk.Label(self.root, text=f"\nRemaining Weight for Max Truck Capacity and how much weight your over trucks max weight capacity {self.calculate_remaining_weight()}")
         remaining_weight_label.pack()
 
+        # Display top combined experts statistics
         stats_label = tk.Label(self.root, text="\nTop Combined Experts Statistics:")
         stats_label.pack()
 
@@ -204,16 +212,28 @@ class BinPackingGUI:
         # Display total execution time
         execution_time_label = tk.Label(self.root, text=f"\nTotal Execution Time: {self.total_execution_time:.4f} seconds")
         execution_time_label.pack()
-    
-    # Format the combined route for display
-    def format_combined_route(self):
+
+    def format_combined_route_detail(self):
         formatted_route = ""
         for i, bin_items in enumerate(self.combined_route):
             total_weight = sum(bin_items)
-            formatted_route += f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} lbs)\n"
+            formatted_route += f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} ton)\n"
         return formatted_route
-    # Calculate and return the remaining weight
-    #Calculate how much your over weight. 
+
+    def format_summary_info(self):
+        max_trucks_to_display = 100
+        formatted_summary = "\n"
+        for i in range(min(max_trucks_to_display, len(self.combined_route))):
+            bin_items = self.combined_route[i]
+            total_weight = sum(bin_items)
+            formatted_summary += f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} ton)\n"
+
+        # Calculate and print the remaining weight
+        remaining_weight, over_limit_weight = self.calculate_remaining_weight()
+        formatted_summary += f"\nRemaining Weight: {remaining_weight} ton\nOver Limit Weight: {over_limit_weight} ton"
+
+        return formatted_summary
+
     def calculate_remaining_weight(self):
         max_trucks = 100
         max_truck_capacity = 11
@@ -221,7 +241,6 @@ class BinPackingGUI:
         remaining_weight = max(0, max_truck_capacity * max_trucks - total_assigned_weight)
         over_limit_weight = max(0, total_assigned_weight - max_truck_capacity * max_trucks)
         return remaining_weight, over_limit_weight
-    
 # Read input data from a CSV file and create a BinPackingProblem instance
 def read_bin_packing_input(file_path):
     with open(file_path, mode='r') as file:
