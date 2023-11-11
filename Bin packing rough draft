@@ -232,7 +232,7 @@ def read_bin_packing_input(file_path):
             return BinPackingProblem(item_weights, truck_weight_capacity)
 
 # Specify the path to your input CSV file
-input_file = 'bin_packing_30.csv'
+input_file = 'bin_packing_101.csv'
 
 start_total_time = time.time()
 
@@ -361,7 +361,7 @@ print(f"Max Fitness: {max_fitness_combined:.2%}")
 print(f"Standard Deviation of Fitness: {std_dev_fitness_combined:.4f}")
     
 
-input_file = 'bin_packing_30.csv'
+input_file = 'bin_packing_101.csv'
 problem_instance = read_bin_packing_input(input_file)
 
 
