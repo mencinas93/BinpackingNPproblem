@@ -20,7 +20,7 @@ class BinPackingProblem:
 
     def __str__(self):
         total_weight = sum(self.item_weights)
-        return f"Item Weights in lb: {self.item_weights}\nTruck Weight Capacity: {self.truck_weight_capacity} lb \nTotal Weight of All Items: {total_weight} lb"
+        return f"Item Weights in ton: {self.item_weights}\nTruck Weight Capacity: {self.truck_weight_capacity} ton \nTotal Weight of All Items: {total_weight} ton"
         #shows whats the items weights and truck weight capacity are as well as total weight of all weight together. 
 #individual class to represent a solution 
 class Individual:
@@ -39,7 +39,7 @@ class Individual:
         random.shuffle(self.item_weights)
         
           # Randomly shuffle the item weights
-        print(f"Total Weight of All Items in lb: {total_weight}")
+        print(f"Total Weight of All Items in ton: {total_weight}")
         for weight in self.item_weights:
             added = False
             for i, bin_items in enumerate(bins):
@@ -53,7 +53,7 @@ class Individual:
         print("Initial Truck Load:")
         for i, bin_items in enumerate(bins):
             items = [self.item_weights[item] for item in bin_items]
-            print(f"Truck {i + 1}: {items} (Total Weight: {sum(items)} Lbs)")
+            print(f"Truck {i + 1}: {items} (Total Weight: {sum(items)} ton)")
         
         for _ in range(num_mutations):
             mutation_method = random.choice(["swap", "scramble"])
@@ -73,7 +73,7 @@ class Individual:
         for i, bin_items in enumerate(self.route):
             items = [self.item_weights[item] for item in bin_items]
             total_weight = sum(items)
-            print(f"Truck {i + 1}: {items} (Total Weight: {total_weight}) lb")
+            print(f"Truck {i + 1}: {items} (Total Weight: {total_weight}) ton")
 
     
     def calculate_fitness(self):
@@ -304,7 +304,7 @@ for loop in range(num_loops):
         for i, bin_items in enumerate(individual.route):
             items = [individual.item_weights[item] for item in bin_items]
             total_weight = sum(items)
-            print(f"Truck {i + 1}: {items} (Total Weight: {total_weight} lb)")
+            print(f"Truck {i + 1}: {items} (Total Weight: {total_weight} ton)")
 
         # Calculate fitness for the individual
         fitness = sum([sum(problem_instance.item_weights[item] for item in bin_items) for bin_items in individual.route])
@@ -322,7 +322,7 @@ for loop in range(num_loops):
     print("\nBest Individual:")
     for i, bin_items in enumerate(best_individual):
         total_weight = sum(bin_items)
-        print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} lb)")
+        print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} ton)")
 
     print(f"Best Fitness: {best_fitness:.2%}")
 
@@ -335,7 +335,7 @@ for i, (individual, fitness) in enumerate(all_best_individuals):
     combined_route.extend(individual) 
     for j, bin_items in enumerate(individual):
         total_weight = sum(bin_items)
-        print(f"Truck {j + 1}: {bin_items} (Total Weight: {total_weight} lb)")
+        print(f"Truck {j + 1}: {bin_items} (Total Weight: {total_weight} ton)")
     print(f"Fitness: {fitness:.2%}")
           
     combined_best_individuals.append((individual, fitness))
@@ -347,7 +347,7 @@ fitness_for_combined_route = total_fitness_combined / len(combined_best_individu
 print("\nCombined Route:")
 for i, bin_items in enumerate(combined_route):
     total_weight = sum(bin_items)
-    print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} lb)")
+    print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} ton)")
 
 print(f"Fitness for Combined Route: {fitness_for_combined_route:.2%}")
 
@@ -396,11 +396,11 @@ print("\nCombined Route:")
 for i in range(min(max_trucks_to_display, len(combined_route))):
     bin_items = combined_route[i]
     total_weight = sum(bin_items)
-    print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} lb)")
+    print(f"Truck {i + 1}: {bin_items} (Total Weight: {total_weight} ton)")
 
 # Calculate and print the remaining weight
 remaining_weight = sum(sum(bin_items) for bin_items in combined_route[max_trucks_to_display:])
-print(f"\nRemaining Weight: {remaining_weight} lb")
+print(f"\nRemaining Weight: {remaining_weight} ton")
 
 total_execution_time = time.time() - start_total_time
 
